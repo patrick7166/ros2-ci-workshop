@@ -54,16 +54,13 @@ jobs:
           source /opt/ros/jazzy/setup.bash
           colcon build --packages-select turtle_guard
 
+      # GOTCHA: `colcon test` for ament_python packages falls back to
+      # `python setup.py test` (unittest), which ignores plain pytest functions
+      # since they are not TestCase subclasses -- you get "NO TESTS RAN".
+      # Running pytest directly is the reliable fix. We source install/setup.bash
+      # so that `turtle_guard` is on PYTHONPATH as a properly installed package.
       - name: Test
         run: |
           source /opt/ros/jazzy/setup.bash
-          colcon test --packages-select turtle_guard --event-handlers console_direct+
-
-      # `colcon test` returns 0 even when tests fail -- it only reports that it
-      # finished running them. `colcon test-result` is what turns a failed test
-      # into a failed job. Forgetting this line is the classic ROS CI bug:
-      # a permanently green pipeline that never actually checks anything.
-      - name: Report results
-        run: |
-          source /opt/ros/jazzy/setup.bash
-          colcon test-result --verbose
+          source install/setup.bash
+          python -m pytest turtle_guard/test/ -v --tb=short
