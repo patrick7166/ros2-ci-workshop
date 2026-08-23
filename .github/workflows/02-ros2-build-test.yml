@@ -43,7 +43,6 @@ jobs:
       - name: Install dependencies with rosdep
         run: |
           apt-get update
-          apt-get install -y python3-colcon-common-extensions
           rosdep update --rosdistro jazzy
           rosdep install --from-paths . --ignore-src -y --rosdistro jazzy
 
@@ -54,19 +53,21 @@ jobs:
           source /opt/ros/jazzy/setup.bash
           colcon build --packages-select turtle_guard
 
-      # GOTCHA: `colcon test` for ament_python packages falls back to
-      # `python setup.py test` (unittest), which ignores plain pytest functions
-      # since they are not TestCase subclasses -- you get "NO TESTS RAN".
-      # Running pytest directly is the reliable fix. We source install/setup.bash
-      # so that `turtle_guard` is on PYTHONPATH as a properly installed package.
-      #
-      # GOTCHA: ament linters (flake8, pep257, copyright) scan from '.' at
-      # runtime. Running pytest from the workspace root means '.' includes
-      # build/ and install/, causing false positives on colcon-generated files.
-      # cd into the package directory first so '.' is scoped to source only.
+      # GOTCHA: source install/setup.bash BEFORE colcon test.
+      # colcon-pytest delegates to a pytest subprocess and that subprocess
+      # inherits the parent shell's PYTHONPATH. Without sourcing the install
+      # space, the subprocess cannot import turtle_guard and finds 0 tests.
       - name: Test
         run: |
           source /opt/ros/jazzy/setup.bash
           source install/setup.bash
-          cd turtle_guard
-          python3 -m pytest test/ -v --tb=short
+          colcon test --packages-select turtle_guard --event-handlers console_direct+
+
+      # `colcon test` returns 0 even when tests fail -- it only reports that it
+      # finished running them. `colcon test-result` is what turns a failed test
+      # into a failed job. Forgetting this line is the classic ROS CI bug:
+      # a permanently green pipeline that never actually checks anything.
+      - name: Report results
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon test-result --verbose
