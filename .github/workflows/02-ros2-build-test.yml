@@ -43,6 +43,7 @@ jobs:
       - name: Install dependencies with rosdep
         run: |
           apt-get update
+          apt-get install -y python3-colcon-common-extensions
           rosdep update --rosdistro jazzy
           rosdep install --from-paths . --ignore-src -y --rosdistro jazzy
 
