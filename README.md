@@ -35,6 +35,7 @@ in the lab, but they should not be the *only* tests you have.
 source /opt/ros/jazzy/setup.bash
 rosdep install --from-paths . --ignore-src -y
 colcon build --packages-select turtle_guard
+source install/setup.bash           # <- puts turtle_guard on PYTHONPATH for colcon-pytest
 colcon test --packages-select turtle_guard --event-handlers console_direct+
 colcon test-result --verbose        # <- this is the line that reports failures
 ```
@@ -74,6 +75,13 @@ ros2 topic echo /cmd_vel            # x is 0.5, not 9.0
   `bash -e {0}` but falls back to `sh` when bash is not on the container's PATH, and
   `source` is a bashism — the symptom is `setup.bash: 1: source: not found`. The POSIX
   alternative is `. /opt/ros/<distro>/setup.sh`.
+- `turtle_guard/setup.py` must declare `tests_require=['pytest']`. Without it, `colcon test`
+  falls back to Python's unittest runner, which ignores plain `def test_*()` functions.
+  Python 3.12 (Ubuntu 24.04) changed unittest to exit with code 5 and print "NO TESTS RAN"
+  in this case — the failure is obvious once you know what to look for.
+- `source install/setup.bash` before `colcon test` is not optional: `colcon-pytest` spawns
+  pytest as a subprocess that inherits the parent shell's `PYTHONPATH`. Without sourcing the
+  install space first, the subprocess cannot import the package and collects zero tests.
 - `ros-tooling/action-ros-ci` is a batteries-included alternative to writing the
   colcon steps by hand — worth knowing about, but the explicit version above is
   better for learning what is actually happening.

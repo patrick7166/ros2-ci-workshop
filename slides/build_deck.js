@@ -588,6 +588,46 @@ function body(s, text, o) {
 }
 
 // =====================================================================
+// 12b — COLCON TEST: THREE REQUIREMENTS  (learned during live setup)
+// =====================================================================
+{
+  const s = slide(true);
+  kicker(s, 'live  ·  02-ros2-build-test.yml', true);
+  title(s, 'colcon test: three things to get right', true);
+
+  terminal(s, M, 1.75, 11.93, [
+    { t: '# 1  setup.py — tell colcon to use pytest, not unittest', c: LMUTED },
+    { t: "tests_require=['pytest'],", c: GREEN_HI, b: true },
+    { t: '', c: LTXT },
+    { t: '# 2  before colcon test — PYTHONPATH for the pytest subprocess', c: LMUTED },
+    { t: 'source install/setup.bash', c: GREEN_HI, b: true },
+    { t: 'colcon test --packages-select turtle_guard --event-handlers console_direct+', c: LTXT },
+    { t: '', c: LTXT },
+    { t: '# 3  after — colcon test exits 0 even when tests fail', c: LMUTED },
+    { t: 'colcon test-result --verbose', c: RED_HI, b: true },
+  ], { fontSize: 14 });
+
+  const reqs = [
+    ['Without ①', 'Python 3.12 unittest exits code 5 with "NO TESTS RAN". Plain def test_*() functions are invisible to the unittest runner.'],
+    ['Without ②', 'The pytest subprocess has no PYTHONPATH, cannot import your package, and finds zero tests — silently.'],
+    ['Without ③', 'colcon test exits 0 even when tests fail. CI is permanently green and checks nothing.'],
+  ];
+  reqs.forEach(([h, d], i) => {
+    const x = M + i * 4.08;
+    card(s, x, 5.25, 3.75, 1.85, PANEL);
+    s.addText(h, {
+      x: x + 0.28, y: 5.44, w: 3.2, h: 0.42, fontFace: FH, fontSize: 15, bold: true,
+      color: RED_HI, margin: 0, valign: 'middle',
+    });
+    s.addText(d, {
+      x: x + 0.28, y: 5.89, w: 3.2, h: 1.1, fontFace: FB, fontSize: 13,
+      color: LMUTED, margin: 0, valign: 'top', lineSpacing: 19,
+    });
+  });
+  notes.push('This is the checklist for "NO TESTS RAN". All three must be present. Attendees will hit this when they copy the workflow to their own repo — knowing the list saves 30 minutes of debugging.');
+}
+
+// =====================================================================
 // 13 — THE DESIGN POINT
 // =====================================================================
 {

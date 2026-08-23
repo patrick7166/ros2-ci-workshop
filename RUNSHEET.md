@@ -49,14 +49,14 @@ and 4 above, saved locally. Talk over the screenshots; the story survives.
 | 1 | Hook: the Friday-afternoon bug | 1–3 | 4 | 4 |
 | 2 | What CI actually is | 4–6 | 5 | 9 |
 | 3 | Anatomy of a workflow file (live) | 7–9 | 8 | 17 |
-| 4 | Making it a *ROS 2* pipeline (live) | 10–13 | 10 | 27 |
-| 5 | **Break it on purpose** (live) | 14–15 | 8 | 35 |
-| 6 | What a grown-up pipeline adds | 16–18 | 6 | 41 |
-| 7 | Do this to your own repo + wrap | 19–20 | 4 | 45 |
+| 4 | Making it a *ROS 2* pipeline (live) | 10–14 | 12 | 29 |
+| 5 | **Break it on purpose** (live) | 15–16 | 8 | 37 |
+| 6 | What a grown-up pipeline adds | 17–19 | 4 | 41 |
+| 7 | Do this to your own repo + wrap | 20–21 | 4 | 45 |
 | — | Q&A | — | 15 | 60 |
 
-Write the section end-times on a sticky note: **:04 :09 :17 :27 :35 :41 :45**.
-If you are past :27 and have not broken the build yet, skip ahead — cut Section 6, not Section 5.
+Write the section end-times on a sticky note: **:04 :09 :17 :29 :37 :41 :45**.
+If you are past :29 and have not broken the build yet, skip ahead — cut Section 6, not Section 5.
 
 ---
 
@@ -244,6 +244,47 @@ Then the trap that matters most:
 > them, not that they passed. If you forget `colcon test-result`, you get a pipeline that
 > is green forever and checks nothing. I have seen this in production. Twice."
 
+### (d) Three things `colcon test` needs to actually work
+
+This is the gotcha that isn't in the ROS 2 docs anywhere obvious, and it will bite
+every attendee when they copy the workflow to their own repo.
+
+**First: declare `tests_require=['pytest']` in `setup.py`.**
+
+```python
+setup(
+    ...
+    tests_require=['pytest'],   # ← without this, colcon uses Python's unittest runner
+    ...
+)
+```
+
+Without it, `colcon-python-setup-py` falls back to Python's `unittest` runner, which
+only discovers `TestCase` subclasses. Your `def test_*()` functions are invisible to it.
+On Python 3.12 (Ubuntu 24.04), this now exits with code 5 and prints "NO TESTS RAN"
+instead of silently passing — which at least makes the bug obvious.
+
+**Second: `source install/setup.bash` immediately before `colcon test`.**
+
+```yaml
+- name: Test
+  run: |
+    source /opt/ros/jazzy/setup.bash
+    source install/setup.bash          # ← new line
+    colcon test --packages-select turtle_guard --event-handlers console_direct+
+```
+
+`colcon-pytest` spawns pytest as a subprocess. That subprocess inherits the parent
+shell's `PYTHONPATH`. Without sourcing the install space first, the subprocess cannot
+import your package and finds zero tests.
+
+**Third: the `colcon test-result` line you already know.**
+
+These three requirements are independent — all three must be present. If attendees hit
+"NO TESTS RAN" when they try this on their own package, this is the checklist to go through.
+
+> ⏱ **:29**
+
 ### The design point — spend a full minute here
 
 Open `turtle_guard/safety.py` and `velocity_guard_node.py` side by side.
@@ -263,8 +304,6 @@ Open `turtle_guard/safety.py` and `velocity_guard_node.py` side by side.
 Be honest about the limits: this does **not** replace testing on hardware. It catches the
 boring 80% — typos, bad merges, broken dependencies, logic errors — so that your scarce
 robot time is spent on the interesting 20%.
-
-> ⏱ **:27**
 
 ---
 
@@ -425,6 +464,15 @@ Two different gotchas wearing similar clothes. `source: not found` means the ste
 command not found` means you sourced ROS in an earlier step and expected it to persist —
 it does not; source it again in this step. Both are covered on the "Write these down" slide,
 and both are worth hitting deliberately if someone hands you the opening.
+
+**"`colcon test` printed `NO TESTS RAN` and exited with code 5."**
+Three independent requirements, all must be present. First: `setup.py` needs
+`tests_require=['pytest']` so `colcon-python-setup-py` delegates to pytest instead of the
+default unittest runner (Python 3.12 changed unittest to exit code 5 with "NO TESTS RAN"
+when no `TestCase` subclasses are found). Second: `source install/setup.bash` must come
+before `colcon test` so the pytest subprocess inherits `PYTHONPATH` and can import your
+package. Third: `colcon test-result --verbose` must follow `colcon test`. All three are
+in `02-ros2-build-test.yml` and `03-ros2-ci-full.yml`.
 
 **"Do I have to write YAML by hand?"**
 No — `ros-tooling/action-ros-ci` collapses the build/test steps into about five lines.
