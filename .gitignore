@@ -7,3 +7,6 @@ __pycache__/
 *.egg-info/
 slides/slide-*.jpg
 slides/*.pdf
+slides/node_modules/
+slides/package.json
+slides/package-lock.json
