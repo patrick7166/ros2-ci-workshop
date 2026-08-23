@@ -17,10 +17,10 @@
 import pytest
 
 from turtle_guard.safety import (
-    UnsafeLimitError,
     clamp,
     clamp_twist,
     is_stale,
+    UnsafeLimitError,
 )
 
 

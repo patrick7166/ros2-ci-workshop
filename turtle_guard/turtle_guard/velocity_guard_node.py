@@ -20,9 +20,8 @@ test it without spinning up a ROS graph.
 """
 
 import rclpy
-from rclpy.node import Node
-
 from geometry_msgs.msg import Twist
+from rclpy.node import Node
 
 from turtle_guard.safety import clamp_twist, is_stale
 
