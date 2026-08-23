@@ -903,5 +903,5 @@ function body(s, text, o) {
 // attach speaker notes
 pres.slides.forEach((s, i) => { if (notes[i]) s.addNotes(notes[i]); });
 
-pres.writeFile({ fileName: '/home/claude/ros2-ci-workshop/slides/ros2-github-actions-workshop.pptx' })
+pres.writeFile({ fileName: '/home/pattywu/courses/2026workshop/ros2-ci-workshop/slides/ros2-github-actions-workshop.pptx' })
   .then(f => console.log('wrote', f, '—', pres.slides.length, 'slides'));
