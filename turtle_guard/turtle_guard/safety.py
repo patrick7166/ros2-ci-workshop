@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Pure velocity-limiting logic, deliberately free of any ROS imports.
+"""
+Pure velocity-limiting logic, deliberately free of any ROS imports.
 
 Keeping the decision-making in a plain Python module is what makes this
 package cheap to test in CI: no DDS traffic, no simulator, no GPU, no
@@ -26,7 +27,8 @@ class UnsafeLimitError(ValueError):
 
 
 def clamp(value: float, limit: float) -> float:
-    """Clamp ``value`` into the closed interval ``[-limit, +limit]``.
+    """
+    Clamp ``value`` into the closed interval ``[-limit, +limit]``.
 
     :param value: the requested speed, in m/s or rad/s.
     :param limit: the maximum magnitude allowed; must be >= 0.
@@ -39,7 +41,8 @@ def clamp(value: float, limit: float) -> float:
 
 
 def clamp_twist(linear_x, angular_z, linear_limit, angular_limit):
-    """Clamp a 2D differential-drive command.
+    """
+    Clamp a 2D differential-drive command.
 
     :param linear_x: requested forward speed in m/s.
     :param angular_z: requested yaw rate in rad/s.
@@ -54,7 +57,8 @@ def clamp_twist(linear_x, angular_z, linear_limit, angular_limit):
 
 
 def is_stale(now_sec: float, last_msg_sec: float, timeout_sec: float) -> bool:
-    """Return ``True`` when the last command is older than ``timeout_sec``.
+    """
+    Return ``True`` when the last command is older than ``timeout_sec``.
 
     A stale command stream is the classic reason a robot keeps driving into a
     wall after the teleop laptop dies, so the guard node stops the robot when

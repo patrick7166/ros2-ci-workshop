@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""A thin ROS 2 node that saturates incoming velocity commands.
+"""
+A thin ROS 2 node that saturates incoming velocity commands.
 
 Subscribes to ``cmd_vel_raw`` and republishes a safe command on ``cmd_vel``.
 All of the interesting logic lives in :mod:`turtle_guard.safety` so that CI can
 test it without spinning up a ROS graph.
 """
 
-import rclpy
 from geometry_msgs.msg import Twist
+import rclpy
 from rclpy.node import Node
 
 from turtle_guard.safety import clamp_twist, is_stale

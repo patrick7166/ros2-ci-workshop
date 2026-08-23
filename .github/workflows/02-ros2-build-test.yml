@@ -59,8 +59,14 @@ jobs:
       # since they are not TestCase subclasses -- you get "NO TESTS RAN".
       # Running pytest directly is the reliable fix. We source install/setup.bash
       # so that `turtle_guard` is on PYTHONPATH as a properly installed package.
+      #
+      # GOTCHA: ament linters (flake8, pep257, copyright) scan from '.' at
+      # runtime. Running pytest from the workspace root means '.' includes
+      # build/ and install/, causing false positives on colcon-generated files.
+      # cd into the package directory first so '.' is scoped to source only.
       - name: Test
         run: |
           source /opt/ros/jazzy/setup.bash
           source install/setup.bash
-          python3 -m pytest turtle_guard/test/ -v --tb=short
+          cd turtle_guard
+          python3 -m pytest test/ -v --tb=short
