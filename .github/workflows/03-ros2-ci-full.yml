@@ -82,27 +82,25 @@ jobs:
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           colcon build --packages-select turtle_guard
 
+      # Same gotcha as workflow 02: colcon test for ament_python falls back to
+      # unittest, which ignores plain pytest functions. Run pytest directly.
+      # cd into the package so ament linter paths stay scoped to source only.
       - name: Test
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          colcon test --packages-select turtle_guard \
-            --event-handlers console_direct+
+          source install/setup.bash
+          cd turtle_guard
+          python3 -m pytest test/ -v --tb=short \
+            --junit-xml=../test-results-${{ matrix.ros_distro }}.xml
 
-      - name: Report results
-        run: |
-          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          colcon test-result --verbose
-
-      # `if: always()` makes this run even though the step above just failed --
+      # `if: always()` makes this run even when the test step fails --
       # which is exactly when you want the logs.
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ matrix.ros_distro }}
-          path: |
-            build/**/test_results/**/*.xml
-            log/latest_test/**
+          path: test-results-${{ matrix.ros_distro }}.xml
           retention-days: 14
           if-no-files-found: ignore
 
